@@ -1,4 +1,4 @@
-import { Action, AnyAction, Dispatch } from '../../../redux/src'
+import { Action, AnyAction, Dispatch } from 'redux'
 import { Context } from 'react'
 
 import {

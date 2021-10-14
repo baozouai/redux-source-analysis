@@ -8,6 +8,7 @@ redux、react-redux及相关中间件源码分析
 - [redux-logger](./src/packages/redux-logger)
 - [redux-thunk](./src/packages/redux-thunk)
 - [redux-undo](./src/packages/redux-undo)
+- [use-sync-external-store](./src/packages/use-sync-external-store)
 ## examples
 
 - [async](./src/examples/async)

@@ -1,9 +1,9 @@
-import React, { Context, ReactNode, useMemo } from 'react'
+import  { Context, ReactNode, useMemo } from 'react'
 import { ReactReduxContext, ReactReduxContextValue } from './Context'
 import { createSubscription } from '../utils/Subscription'
 import { useIsomorphicLayoutEffect } from '../utils/useIsomorphicLayoutEffect'
 import type { FixTypeLater } from '../types'
-import { Action, AnyAction, Store } from '../../../redux/src'
+import { Action, AnyAction, Store } from 'redux'
 
 export interface ProviderProps<A extends Action = AnyAction> {
   /**
@@ -29,12 +29,10 @@ function Provider({ store, context, children }: ProviderProps) {
   }, [store])
 
   const previousState = useMemo(() => store.getState(), [store])
-
   useIsomorphicLayoutEffect(() => {
     const { subscription } = contextValue
     subscription.onStateChange = subscription.notifyNestedSubs
     subscription.trySubscribe()
-
     if (previousState !== store.getState()) {
       subscription.notifyNestedSubs()
     }

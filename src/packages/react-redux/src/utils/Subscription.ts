@@ -118,6 +118,10 @@ export function createSubscription(store: any, parentSub?: Subscription) {
 
   function trySubscribe() {
     if (!unsubscribe) {
+      // 对于Provider，没有parentSub，那么会调用store.subscribe,其他的有parentSub。
+      // 每次dispatch后store会执行每个listener，
+      // 对于Provider，onStateChange为notifyNestedSubs，即调用它们子组件的onStateChange，
+      // 保证当store的state变化后组件是从最外层一层接着一层更新
       unsubscribe = parentSub
         ? parentSub.addNestedSub(handleChangeWrapper)
         : store.subscribe(handleChangeWrapper)
