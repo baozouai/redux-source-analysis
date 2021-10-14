@@ -156,7 +156,7 @@ export function pureFinalPropsSelectorFactory<
     if (mapDispatchToProps.dependsOnOwnProps)
       // @ts-ignore
       dispatchProps = mapDispatchToProps(dispatch, ownProps)
-
+    // 这里merge的原因是ownProps变化了，那么要返回一个新的引用，才能触发组件render
     mergedProps = mergeProps(stateProps, dispatchProps, ownProps)
     return mergedProps
   }
@@ -166,7 +166,7 @@ export function pureFinalPropsSelectorFactory<
     const statePropsChanged = !areStatePropsEqual(nextStateProps, stateProps)
     // @ts-ignore
     stateProps = nextStateProps
-
+    // state确实变化了才生成新的mergedProps，否则返回旧的引用，避免不必要的render
     if (statePropsChanged)
       mergedProps = mergeProps(stateProps, dispatchProps, ownProps)
 
@@ -179,6 +179,7 @@ export function pureFinalPropsSelectorFactory<
     const stateChanged = !areStatesEqual(nextState, state)
     state = nextState
     ownProps = nextOwnProps
+    // 下面的三个判断也是为了避免不必要的render，确实有变化了才返回新的mergedProps引用，触发组件render
     // ownProps和state都改变
     if (propsChanged && stateChanged) return handleNewPropsAndNewState()
     // 两者之一改变

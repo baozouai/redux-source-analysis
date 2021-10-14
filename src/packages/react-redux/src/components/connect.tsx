@@ -77,11 +77,11 @@ function captureWrapperProps(
 ) {
   // We want to capture the wrapper props and child props we used for later comparisons
   lastWrapperProps.current = wrapperProps
-  // 由于是Effect回调，所以renderIsScheduled就为false了
+  // 由于已经是Effect回调，所以就没有正在调度了
   renderIsScheduled.current = false
 
   // If the render was from a store update, clear out that reference and cascade the subscriber update
-  // 如果store更新了，那么清空，然后通知子级subscriber
+  // 如果更新来着store，那么就必须通知子级subscriber，然后将store更新的标记清空
   if (childPropsFromStoreUpdate.current) {
     childPropsFromStoreUpdate.current = null
     notifyNestedSubs()
@@ -119,6 +119,7 @@ function subscribeUpdates(
   // 每当store更新传播到该组件时，都会调用这个回调来检查是否需要更新，因为store update后，会通过顶级组件，
   // 每一层update后再通过notifyNestedSubs通知下一层，所以这里用了propagates(传播)
   const checkForUpdates = () => {
+    debugger
     // 如果已经取消订阅了(下面的unsubscribeWrapper会设置didUnsubscribe为true)，或组件还没挂载
     if (didUnsubscribe || !isMounted.current) {
       // 那么不执行过期的listeners
@@ -149,21 +150,39 @@ function subscribeUpdates(
 
     // If the child props haven't changed, nothing to do here - cascade the subscription update
     if (newChildProps === lastChildProps.current) {
-      // 如果新旧childProps都没改变，且render已经scheduled了，那么notifyNestedSubs
+      /**
+       * store的数据确实更新了，可是组件不一定用到更新到的数据，比如store中的数据为{a: 1, b: 2},更新后是{a:2, b: 2},
+       * 而某个组件的mapStateToProps=(state) => ({b: state.b})，那么其实该组件无需更新，通知其子Sub组件就好了
+       */
+      // 如果新旧childProps都没改变且没正在调度，那么notifyNestedSubs
       if (!renderIsScheduled.current) {
         notifyNestedSubs()
       }
     } else {
+      // 到了这里新旧childProps确实不相等了，那么保存新的引用，且调用additionalSubscribeListener来forceRender
       // Save references to the new child props.  Note that we track the "child props from store update"
       // as a ref instead of a useState/useReducer because we need a way to determine if that value has
       // been processed.  If this went into useState/useReducer, we couldn't clear out the value without
       // forcing another re-render, which we don't want.
       // 保存newChildProps的引用，这里不用useState或useReducer
       lastChildProps.current = newChildProps
+      // checkForUpdates是store变化才执行的回调，所以设置childProps来自store更新的标记
       childPropsFromStoreUpdate.current = newChildProps
+      // 标记正在调度
       renderIsScheduled.current = true
 
       // Trigger the React `useSyncExternalStore` subscriber
+      /**
+       * 这个函数实际上是useSyncExternalStore里的handleStoreChange:
+       * @example
+       * const handleStoreChange = () => {
+       *  // store变化后的回调
+       *  if (checkIfSnapshotChanged(inst)) {
+       *    // Force a re-render.
+       *    forceUpdate({ inst });
+       *  }
+       *}
+       */
       additionalSubscribeListener()
     }
   }
@@ -643,6 +662,7 @@ function connect<
         ? props.store!
         : contextValue!.store
       /**
+       * 这个执行后会得到真正的childProps
        * @example
        * childPropsSelector = function pureFinalPropsSelector(
        *  nextState: State,
@@ -698,9 +718,13 @@ function connect<
       }, [didStoreComeFromProps, contextValue, subscription])
 
       // Set up refs to coordinate values between the subscription effect and the render logic
+      /** 更新前传给connect后组件的props，包括传给WrappedComponent的、mapStateToProps、mapDispatchToProps的 */
       const lastChildProps = useRef<unknown>()
+      /** 更新前传给WrappedComponent的Props */
       const lastWrapperProps = useRef(wrapperProps)
+      /** 来着sotre的props是否更新 */
       const childPropsFromStoreUpdate = useRef<unknown>()
+      /** 是否正在调度 */
       const renderIsScheduled = useRef(false)
       const isProcessingDispatch = useRef(false)
       const isMounted = useRef(false)
@@ -722,6 +746,13 @@ function connect<
           // If we have new child props, and the same wrapper props, we know we should use the new child props as-is.
           // But, if we have new wrapper props, those might change the child props, so we have to recalculate things.
           // So, we'll use the child props from store update only if the wrapper props are the same as last time.
+          // 这个render可能是由 Redux store 更新所触发，产生了新的childProps，
+          // 但在这之后我们又可能获取到新的wrapperProps。
+          // 如果有新的childProps,但wrapperProps和上次相同，那么我们使用新的childProps就好，
+          // 即return childPropsFromStoreUpdate.current。
+          // 但是 ，如果有新老wrapperProps不同，其可能会改变childProps，那么我们应该重新计算，
+          // 即return childPropsSelector(store.getState(), wrapperProps)。
+          // 综上，只有在更新来着store，且在wrapperProps和上次相同的情况下才使用store更新的childProps
           if (
             childPropsFromStoreUpdate.current &&
             wrapperProps === lastWrapperProps.current
@@ -733,6 +764,7 @@ function connect<
           // This will likely cause Bad Things (TM) to happen in Concurrent Mode.
           // Note that we do this because on renders _not_ caused by store updates, we need the latest store state
           // to determine what the child props should be.
+          // 否则wrapperProps要参与到childProps的计算中
           return childPropsSelector(store.getState(), wrapperProps)
         }
         return selector
@@ -779,12 +811,17 @@ function connect<
       let actualChildProps: unknown
 
       try {
+        /** 
+         * useSyncExternalStore里面会触发forceRender，那么这里就会通过actualChildPropsSelector()获取到新增childProps，
+         * 那么页面就变化了 
+         * */
         actualChildProps = useSyncExternalStore(
           subscribeForReact,
           actualChildPropsSelector,
           // TODO Need a real getServerSnapshot here
           actualChildPropsSelector
         )
+        debugger
       } catch (err) {
         if (latestSubscriptionCallbackError.current) {
           ;(
@@ -794,7 +831,11 @@ function connect<
 
         throw err
       }
-
+      /** 
+       * 上面相关状态都用完了，那么这里会重置，且保存最新的childProps，
+       * 以便下次和store变化的时候触发checkForUpdates得到newChildProps做比较，
+       * 来判断是否需要forRender 
+       * */
       useIsomorphicLayoutEffect(() => {
         latestSubscriptionCallbackError.current = undefined
         childPropsFromStoreUpdate.current = undefined

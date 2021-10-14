@@ -1,7 +1,7 @@
-import {useRef, useEffect, useMemo, useDebugValue} from 'react';
-import {is} from './util';
-import {useSyncExternalStore} from './useSyncExternalStoreClient';
-import {Subscribe,InstanceExtra} from './type'
+import { useRef, useEffect, useMemo, useDebugValue } from 'react';
+import { is } from './util';
+import { useSyncExternalStore } from './useSyncExternalStoreClient';
+import { Subscribe, InstanceExtra } from './type'
 // Intentionally not using named imports because Rollup uses dynamic
 // dispatch for CommonJS interop named imports.
 
