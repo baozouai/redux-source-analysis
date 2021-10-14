@@ -8,7 +8,7 @@
  */
 
 export function useSyncExternalStore<T>(
-  subscribe: (() => void) => () => void,
+  subscribe: (onChange:() => void) => () => void,
   getSnapshot: () => T,
   getServerSnapshot?: () => T,
 ): T {

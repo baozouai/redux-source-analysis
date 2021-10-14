@@ -1,12 +1,9 @@
-import {useState, useEffect, useLayoutEffect, useDebugValue,startTransition,} from 'react';
-import {is} from './util';
-import {Subscribe, Instance} from './type'
+import { useState, useEffect, useLayoutEffect, useDebugValue, startTransition, } from 'react';
+import { is } from './util';
+import { Subscribe, Instance } from './type'
 // Intentionally not using named imports because Rollup uses dynamic
 // dispatch for CommonJS interop named imports.
 
-
-let didWarnOld18Alpha = false;
-let didWarnUncachedGetSnapshot = false;
 
 // Disclaimer: This shim breaks many of the rules of React, and only works
 // because of a very particular set of implementation details and assumptions
@@ -35,8 +32,11 @@ export function useSyncExternalStore<Snapshot>(
   // breaks the rules of React, and only works here because of specific
   // implementation details, most importantly that updates are
   // always synchronous.
+  /**
+   * 每次渲染时从store中读取当前快照。这打破了React的规则，特定的实现细节只在这里work，
+   * 最重要的是更新总是同步的
+   */
   const value = getSnapshot();
-
   // Because updates are synchronous, we don't queue them. Instead we force a
   // re-render whenever the subscribed state changes by updating an some
   // arbitrary useState hook. Then, during render, we call getSnapshot to read
@@ -51,7 +51,8 @@ export function useSyncExternalStore<Snapshot>(
   //
   // To force a re-render, we call forceUpdate({inst}). That works because the
   // new object always fails an equality check.
-  const [{inst}, forceUpdate] = useState<{inst: Instance<Snapshot>}>({inst: {value, getSnapshot}});
+  // 因为更新是同步的，
+  const [{ inst }, forceUpdate] = useState<{ inst: Instance<Snapshot> }>({ inst: { value, getSnapshot } });
 
   // Track the latest getSnapshot function with a ref. This needs to be updated
   // in the layout phase so we can access it during the tearing check that
@@ -66,7 +67,7 @@ export function useSyncExternalStore<Snapshot>(
     // effect may have mutated the store.
     if (checkIfSnapshotChanged(inst)) {
       // Force a re-render.
-      forceUpdate({inst});
+      forceUpdate({ inst });
     }
   }, [subscribe, value, getSnapshot]);
 
@@ -75,7 +76,7 @@ export function useSyncExternalStore<Snapshot>(
     // detected in the subscription handler.
     if (checkIfSnapshotChanged(inst)) {
       // Force a re-render.
-      forceUpdate({inst});
+      forceUpdate({ inst });
     }
     const handleStoreChange = () => {
       // TODO: Because there is no cross-renderer API for batching updates, it's
@@ -85,9 +86,10 @@ export function useSyncExternalStore<Snapshot>(
 
       // The store changed. Check if the snapshot changed since the last time we
       // read from the store.
+      // store变化后的回调
       if (checkIfSnapshotChanged(inst)) {
         // Force a re-render.
-        forceUpdate({inst});
+        forceUpdate({ inst });
       }
     };
     // Subscribe to the store and return a clean-up function.
@@ -98,7 +100,7 @@ export function useSyncExternalStore<Snapshot>(
   return value;
 }
 
-function checkIfSnapshotChanged<Snapshot>(inst:Instance<Snapshot>) {
+function checkIfSnapshotChanged<Snapshot>(inst: Instance<Snapshot>) {
   const latestGetSnapshot = inst.getSnapshot;
   const prevValue = inst.value;
   try {
