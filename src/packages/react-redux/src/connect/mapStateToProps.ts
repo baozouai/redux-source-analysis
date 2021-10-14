@@ -11,6 +11,7 @@ export function whenMapStateToPropsIsFunction(mapStateToProps?: MapToProps) {
 }
 
 export function whenMapStateToPropsIsMissing(mapStateToProps?: MapToProps) {
+  // mapStateToProps为空那么会返回空对象{}
   return !mapStateToProps ? wrapMapToPropsConstant(() => ({})) : undefined
 }
 

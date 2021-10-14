@@ -9,4 +9,4 @@
 //   </React.StrictMode>,
 //   document.getElementById('root')
 // )
-import './examples/todos-with-undo/src/index'
+import './examples/todos/src/index'

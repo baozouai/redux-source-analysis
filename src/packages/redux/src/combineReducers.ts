@@ -30,7 +30,7 @@ function getUnexpectedStateShapeWarningMessage(
       'to combineReducers is an object whose values are reducers.'
     )
   }
-
+  // 如果不是空对象
   if (!isPlainObject(inputState)) {
     return (
       `The ${argumentName} has unexpected type of "${kindOf(
@@ -59,12 +59,14 @@ function getUnexpectedStateShapeWarningMessage(
     )
   }
 }
-
+/**
+ * @description: 检查传入的reducers是否符合要求，default不允许return unfettered，可以return null
+ */
 function assertReducerShape(reducers: ReducersMapObject) {
   Object.keys(reducers).forEach(key => {
     const reducer = reducers[key]
     const initialState = reducer(undefined, { type: ActionTypes.INIT })
-
+    // reducer的default不允许return undefined
     if (typeof initialState === 'undefined') {
       throw new Error(
         `The slice reducer for key "${key}" returned undefined during initialization. ` +
@@ -125,6 +127,7 @@ export default function combineReducers<M extends ReducersMapObject>(
 export default function combineReducers(reducers: ReducersMapObject) {
   const reducerKeys = Object.keys(reducers)
   const finalReducers: ReducersMapObject = {}
+  // 将传入的reducers拷贝到finalReducers
   for (let i = 0; i < reducerKeys.length; i++) {
     const key = reducerKeys[i]
 
@@ -146,9 +149,10 @@ export default function combineReducers(reducers: ReducersMapObject) {
   if (process.env.NODE_ENV !== 'production') {
     unexpectedKeyCache = {}
   }
-
+  // debugger
   let shapeAssertionError: Error
   try {
+    // 检查传入的reducers是否合格
     assertReducerShape(finalReducers)
   } catch (e) {
     shapeAssertionError = e
@@ -182,6 +186,7 @@ export default function combineReducers(reducers: ReducersMapObject) {
       const previousStateForKey = state[key]
       const nextStateForKey = reducer(previousStateForKey, action)
       if (typeof nextStateForKey === 'undefined') {
+        // 不允许return undefined
         const actionType = action && action.type
         throw new Error(
           `When called with an action of type ${
@@ -196,6 +201,7 @@ export default function combineReducers(reducers: ReducersMapObject) {
     }
     hasChanged =
       hasChanged || finalReducerKeys.length !== Object.keys(state).length
+    // 任一reducer返回state跟preState不同则hasChanged，那么返回nextState，否则返回之前的state
     return hasChanged ? nextState : state
   }
 }

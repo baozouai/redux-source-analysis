@@ -112,7 +112,7 @@ export default function createStore<
   let currentListeners: (() => void)[] | null = []
   let nextListeners = currentListeners
   let isDispatching = false
-
+  // debugger
   /**
    * This makes a shallow copy of currentListeners so we can use
    * nextListeners as a temporary list while dispatching.
@@ -167,6 +167,7 @@ export default function createStore<
    * @returns A function to remove this change listener.
    */
   function subscribe(listener: () => void) {
+    // debugger
     if (typeof listener !== 'function') {
       throw new Error(
         `Expected the listener to be a function. Instead, received: '${kindOf(
@@ -190,9 +191,7 @@ export default function createStore<
     nextListeners.push(listener)
 
     return function unsubscribe() {
-      if (!isSubscribed) {
-        return
-      }
+      if (!isSubscribed) return
 
       if (isDispatching) {
         throw new Error(

@@ -11,6 +11,8 @@ export default defineConfig({
       "redux-logger": "/src/packages/redux-logger/src/index.js",
       "redux-thunk": "/src/packages/redux-thunk/src",
       "redux-undo": "/src/packages/redux-undo/src",
+      "use-sync-external-store": "/src/packages/use-sync-external-store",
+      "use-sync-external-store/extra": "/src/packages/use-sync-external-store/extra",
       "@/examples": "/src/examples"
     },
     extensions: [".tsx", '.jsx', '.js', '.ts']

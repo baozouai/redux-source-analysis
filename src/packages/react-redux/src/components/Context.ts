@@ -1,5 +1,5 @@
 import React from 'react'
-import { Action, AnyAction, Store } from '../../../redux/src'
+import { Action, AnyAction, Store } from 'redux'
 import type { Subscription } from '../utils/Subscription'
 
 export interface ReactReduxContextValue<
