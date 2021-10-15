@@ -55,7 +55,6 @@ export function createSelectorHook(
     )
 
     useDebugValue(selectedState)
-
     return selectedState
   }
 }

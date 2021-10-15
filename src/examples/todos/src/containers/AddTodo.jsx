@@ -1,10 +1,11 @@
-import React from 'react'
-import { connect, useDispatch } from 'react-redux'
+import { connect, useDispatch, useSelector } from 'react-redux'
 import { addTodo } from '../actions'
 
 const AddTodo = () => {
   let input
+  useSelector(state => ({}), () => true)
   const dispatch = useDispatch()
+  debugger
   return (
     <div>
       <form onSubmit={e => {
@@ -19,6 +20,7 @@ const AddTodo = () => {
         <button type="submit">
           Add Todo
         </button>
+        <button onClick={() => input.value = ''}>reset</button>
       </form>
     </div>
   )
