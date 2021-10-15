@@ -77,11 +77,13 @@ function captureWrapperProps(
 ) {
   // We want to capture the wrapper props and child props we used for later comparisons
   lastWrapperProps.current = wrapperProps
-  // 由于已经是Effect回调，所以就没有正在调度了
+  // renderIsScheduled.current为true是在subscribeUpdates中store数据改变触发checkForUpdates设置的，
+  // forceRender后执行Effect回调，所以就没有正在调度了
   renderIsScheduled.current = false
 
   // If the render was from a store update, clear out that reference and cascade the subscriber update
   // 如果更新来着store，那么就必须通知子级subscriber，然后将store更新的标记清空
+  // 可以清空是因为调用captureWrapperProps之前使用到childPropsFromStoreUpdate.current的都完成了，那么这里就可以置空了
   if (childPropsFromStoreUpdate.current) {
     childPropsFromStoreUpdate.current = null
     notifyNestedSubs()
@@ -89,6 +91,7 @@ function captureWrapperProps(
 }
 
 /**  
+ * 这里是订阅store更新
  * Effect callback, extracted: subscribe to the Redux store or nearest connected ancestor,
  * check for updates after dispatched actions, and trigger re-renders. 
  * */
@@ -119,7 +122,7 @@ function subscribeUpdates(
   // 每当store更新传播到该组件时，都会调用这个回调来检查是否需要更新，因为store update后，会通过顶级组件，
   // 每一层update后再通过notifyNestedSubs通知下一层，所以这里用了propagates(传播)
   const checkForUpdates = () => {
-    debugger
+    // debugger
     // 如果已经取消订阅了(下面的unsubscribeWrapper会设置didUnsubscribe为true)，或组件还没挂载
     if (didUnsubscribe || !isMounted.current) {
       // 那么不执行过期的listeners
@@ -168,7 +171,7 @@ function subscribeUpdates(
       lastChildProps.current = newChildProps
       // checkForUpdates是store变化才执行的回调，所以设置childProps来自store更新的标记
       childPropsFromStoreUpdate.current = newChildProps
-      // 标记正在调度
+      // 因为下面调用additionalSubscribeListener会触发forceRender，那么这里要标记正在调度
       renderIsScheduled.current = true
 
       // Trigger the React `useSyncExternalStore` subscriber
@@ -193,7 +196,7 @@ function subscribeUpdates(
 
   // Pull data from the store after first render in case the store has
   // changed since we began.
-  // 在首次渲染后从store中提取数据，以防自开始渲染后store发生更改
+  // 在首次渲染后从store中提取数据，以防开始渲染后store发生更改
   checkForUpdates()
 
   const unsubscribeWrapper = () => {
@@ -521,7 +524,7 @@ function connect<
   const Context = context
 
   type WrappedComponentProps = TOwnProps & ConnectProps
-  /** mapStateToProps为空则是initConstantSelector，否则是initProxySelector */
+  /** mapStateToProps为空则是initConstantSelector，最终会返回空对象，否则是initProxySelector */
   const initMapStateToProps = match(
     mapStateToProps,
     // @ts-ignore
@@ -556,7 +559,6 @@ function connect<
     TOwnProps,
     WrappedComponentProps
   > = (WrappedComponent) => {
-     
     // debugger
     if (
       process.env.NODE_ENV !== 'production' &&
@@ -664,10 +666,15 @@ function connect<
       /**
        * 这个执行后会得到真正的childProps
        * @example
+       * // 最终返回一个 mergedProps：stateProps, dispatchProps, ownProps合并的props
        * childPropsSelector = function pureFinalPropsSelector(
        *  nextState: State,
        *  nextOwnProps: TOwnProps
-       * )
+       * ) {
+       *  return hasRunAtLeastOnce ? 
+       *  handleSubsequentCalls(nextState, nextOwnProps): 
+       *  handleFirstCall(nextState, nextOwnProps)
+       * }
        */
       const childPropsSelector = useMemo(() => {
         // The child props selector needs the store reference as an input.
@@ -718,11 +725,11 @@ function connect<
       }, [didStoreComeFromProps, contextValue, subscription])
 
       // Set up refs to coordinate values between the subscription effect and the render logic
-      /** 更新前传给connect后组件的props，包括传给WrappedComponent的、mapStateToProps、mapDispatchToProps的 */
+      /** 更新前传给connect后组件的props，包括传给WrappedComponent的、mapStateToProps、mapDispatchToProps执行后得到的 */
       const lastChildProps = useRef<unknown>()
       /** 更新前传给WrappedComponent的Props */
       const lastWrapperProps = useRef(wrapperProps)
-      /** 来着sotre的props是否更新 */
+      /** 来自sotre的props是否更新,只有store更新了才有值，否则都是undefined */
       const childPropsFromStoreUpdate = useRef<unknown>()
       /** 是否正在调度 */
       const renderIsScheduled = useRef(false)
@@ -812,8 +819,8 @@ function connect<
 
       try {
         /** 
-         * useSyncExternalStore里面会触发forceRender，那么这里就会通过actualChildPropsSelector()获取到新增childProps，
-         * 那么页面就变化了 
+         * useSyncExternalStore里面会触发forceRender，那么这里就会通过actualChildPropsSelector()
+         * 获取到新的childProps，那么页面就变化了 
          * */
         actualChildProps = useSyncExternalStore(
           subscribeForReact,
@@ -821,7 +828,7 @@ function connect<
           // TODO Need a real getServerSnapshot here
           actualChildPropsSelector
         )
-        debugger
+        // debugger
       } catch (err) {
         if (latestSubscriptionCallbackError.current) {
           ;(
@@ -844,6 +851,11 @@ function connect<
 
       // Now that all that's done, we can finally try to actually render the child component.
       // We memoize the elements for the rendered child component as an optimization.
+      /**
+       * 这里的actualChildProps可能包含stateProps、dispatchProps、ownProps
+       * @example
+       * mergedProps = mergeProps(stateProps, dispatchProps, ownProps)
+       *  */ 
       const renderedWrappedComponent = useMemo(() => {
         return (
           // @ts-ignore

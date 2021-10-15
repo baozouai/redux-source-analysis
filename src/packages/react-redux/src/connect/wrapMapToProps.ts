@@ -33,6 +33,7 @@ export function wrapMapToPropsConstant(
     function constantSelector() {
       return constant
     }
+    // 没有依赖ownProps
     constantSelector.dependsOnOwnProps = false
     return constantSelector
   }
