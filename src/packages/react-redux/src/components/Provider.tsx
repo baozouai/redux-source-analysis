@@ -20,6 +20,7 @@ export interface ProviderProps<A extends Action = AnyAction> {
 }
 
 function Provider({ store, context, children }: ProviderProps) {
+  // 大部分情况下contextValue是不会变的，因为大部分情况下store不会变，触发在render的时候传入store
   const contextValue = useMemo(() => {
     const subscription = createSubscription(store)
     return {

@@ -8,7 +8,9 @@ import { useEffect, useLayoutEffect } from 'react'
 // which may cause missed updates; we also must ensure the store subscription
 // is created synchronously, otherwise a store update may occur before the
 // subscription is created and an inconsistent state may be observed
-
+/**
+ * 在服务端使用useLayoutEffect会抛出一个warning，所以这里判断下
+ */
 export const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' &&
   typeof window.document !== 'undefined' &&

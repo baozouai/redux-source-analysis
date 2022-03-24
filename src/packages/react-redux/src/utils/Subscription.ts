@@ -11,18 +11,20 @@ type Listener = {
   next: Listener | null
   prev: Listener | null
 }
-
+/** 创建一个listener的相关方法 */
 function createListenerCollection() {
   const batch = getBatch()
+  // 用链表的形式组成listeners
   let first: Listener | null = null
   let last: Listener | null = null
 
   return {
+    // 清空listeners
     clear() {
       first = null
       last = null
     },
-
+    /** 通知所有listener */
     notify() {
       batch(() => {
         let listener = first
@@ -32,7 +34,7 @@ function createListenerCollection() {
         }
       })
     },
-
+    // 获取所有listeners，是数组的形式
     get() {
       let listeners = []
       let listener = first
@@ -42,10 +44,10 @@ function createListenerCollection() {
       }
       return listeners
     },
-
+    // 添加订阅，会返回一个取消订阅的方法
     subscribe(callback: () => void) {
       let isSubscribed = true
-
+      // 创建一个listener，然后移动last
       let listener: Listener = (last = {
         callback,
         next: null,
@@ -53,23 +55,30 @@ function createListenerCollection() {
       })
 
       if (listener.prev) {
+        // 有pre的话，意味着上面一开始的last有值，那么拼接到后面
         listener.prev.next = listener
       } else {
+        // 否则指向第一个
         first = listener
       }
-
+      // 返回取消订阅
       return function unsubscribe() {
+        // 该listener已经取消订阅了，或者listener为空，那么直接return
         if (!isSubscribed || first === null) return
+        // 标志已经取消了订阅
         isSubscribed = false
-
+        // 如果该listener有后缀，那么其后缀的pre之前前缀
         if (listener.next) {
           listener.next.prev = listener.prev
         } else {
+          //没有后缀，意味着是最后一个，那么last移动到前缀
           last = listener.prev
         }
         if (listener.prev) {
+          // 如果listener有前缀，那么前缀的next之前该listener的后缀
           listener.prev.next = listener.next
         } else {
+          // 没有前缀，意味着是第一个，那么指向后面
           first = listener.next
         }
       }
@@ -94,7 +103,11 @@ const nullListeners = {
   notify() {},
   get: () => [],
 } as unknown as ListenerCollection
-
+/**
+ * @description 创建订阅
+ * @param store 
+ * @param parentSub 有值的话parentSub会将handleChangeWrapper放入listeners中
+ */
 export function createSubscription(store: any, parentSub?: Subscription) {
   let unsubscribe: VoidFunc | undefined
   let listeners: ListenerCollection = nullListeners
