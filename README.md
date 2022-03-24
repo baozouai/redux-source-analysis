@@ -14,7 +14,7 @@ redux、react-redux及相关中间件源码分析
 - [async](./src/examples/async)
 - [counter](./src/examples/counter)
 - [shoppint-cart](./src/examples/shoppint-cart)
-- [todomvc](./src/examples/async)
+- [todomvc](./src/examples/todomvc)
 - [todos](./src/examples/todos)
 - [todos-with-undo](./src/examples/todos-with-undo)
 - [tree-view](./src/examples/tree-view)

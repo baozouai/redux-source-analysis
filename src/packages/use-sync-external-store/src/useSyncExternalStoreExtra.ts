@@ -107,7 +107,7 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
        * 虽然说store中的数据确实变化了，如果有传入自定义isEqual函数，那么这里判断下，
        * 满足的话还是返回上次从store中选择的数据，优化性能
        * 比如store中的数据是{a: 1, b: 1}，selection的数据是{a: 1},dispatch改变了b => 2,
-       * 那么store中的数据就是{a: 1, b: 2},客商selection并没有选择b，如果我们传了isEqual，
+       * 那么store中的数据就是{a: 1, b: 2},可是selection并没有选择b，如果我们传了isEqual，
        * 那么满足条件的情况下就能优化性能了
        */
       if (isEqual?.(prevSelection, nextSelection)) {

@@ -1,4 +1,5 @@
 /**
+ * @description: 是否是纯对象
  * @param obj The object to inspect.
  * @returns True if the argument appears to be a plain object.
  */

@@ -55,6 +55,7 @@ export default function createStore<
   StateExt = never
 >(
   reducer: Reducer<S, A>,
+  /** 可以是对象，或 enhancer */
   preloadedState?: PreloadedState<S>,
   enhancer?: StoreEnhancer<Ext, StateExt>
 ): Store<ExtendState<S, StateExt>, A, StateExt, Ext> & Ext
@@ -72,19 +73,21 @@ export default function createStore<
     (typeof preloadedState === 'function' && typeof enhancer === 'function') ||
     (typeof enhancer === 'function' && typeof arguments[3] === 'function')
   ) {
+    // 不允许preloadedState和enhancer同时为函数，有多个middleware要用applyMiddleware处理
     throw new Error(
       'It looks like you are passing several store enhancers to ' +
         'createStore(). This is not supported. Instead, compose them ' +
         'together to a single function. See https://redux.js.org/tutorials/fundamentals/part-4-store#creating-a-store-with-enhancers for an example.'
     )
   }
-
+  // 如果preloadedState为函数且没有传enhander，那么将preloadedState作为enhancer
   if (typeof preloadedState === 'function' && typeof enhancer === 'undefined') {
     enhancer = preloadedState as StoreEnhancer<Ext, StateExt>
     preloadedState = undefined
   }
 
   if (typeof enhancer !== 'undefined') {
+    // enhancer必须为函数
     if (typeof enhancer !== 'function') {
       throw new Error(
         `Expected the enhancer to be a function. Instead, received: '${kindOf(
@@ -98,7 +101,7 @@ export default function createStore<
       preloadedState as PreloadedState<S>
     ) as Store<ExtendState<S, StateExt>, A, StateExt, Ext> & Ext
   }
-
+  // reducer必须为函数
   if (typeof reducer !== 'function') {
     throw new Error(
       `Expected the root reducer to be a function. Instead, received: '${kindOf(
@@ -111,6 +114,11 @@ export default function createStore<
   let currentState = preloadedState as S
   let currentListeners: (() => void)[] | null = []
   let nextListeners = currentListeners
+  /**
+   * 是否正在dispatch，dispatch后执行完reducer才置为false
+    * 即每次dispatch后只有等到 store中的数据变更完成后才允许执行下一次变更，避免store响应多个dispatch时结果不同步的问题；
+    * 如果需要异步dispatch需要通过添加中间件实现
+   */
   let isDispatching = false
   // debugger
   /**
@@ -119,6 +127,21 @@ export default function createStore<
    *
    * This prevents any bugs around consumers calling
    * subscribe/unsubscribe in the middle of a dispatch.
+   * 
+   * 做一次浅复制，避免dispatch过程中出现subscribe或unsubscribe，也就是说在订阅的过程中又添加或减少订阅，
+   * dispatch时候并不会立即体现，只会在下次触发的时候才能体现
+   * 
+   * @example
+   * 
+   * subscribe(() => {
+   *  console.log('subscribe1')
+   *  subscribe(() => {
+   *    console.log('subscribe2')
+   *  })
+   * })
+   *
+   * notify()
+   *  // log subscribe1而不是subscribe1和subscribe2
    */
   function ensureCanMutateNextListeners() {
     if (nextListeners === currentListeners) {
@@ -168,6 +191,7 @@ export default function createStore<
    */
   function subscribe(listener: () => void) {
     // debugger
+    // listen必须是函数
     if (typeof listener !== 'function') {
       throw new Error(
         `Expected the listener to be a function. Instead, received: '${kindOf(
@@ -177,6 +201,17 @@ export default function createStore<
     }
 
     if (isDispatching) {
+      /**
+       * isDispatching = true只有在触发dispatch的时候才会设置
+       * @example
+       * try {
+       *   isDispatching = true
+       *   currentState = currentReducer(currentState, action)
+       * } finally {
+       *   isDispatching = false
+       * }
+       * 如果在reducer函数的过程中又调用了store.subscribe，那么isDispatch就会为true
+       */
       throw new Error(
         'You may not call store.subscribe() while the reducer is executing. ' +
           'If you would like to be notified after the store has been updated, subscribe from a ' +
@@ -184,9 +219,9 @@ export default function createStore<
           'See https://redux.js.org/api/store#subscribelistener for more details.'
       )
     }
-
-    let isSubscribed = true
-
+    // 到了这里listener是函数，那么标记已经订阅了
+    let isSubscribed = true 
+    
     ensureCanMutateNextListeners()
     nextListeners.push(listener)
 
@@ -201,7 +236,7 @@ export default function createStore<
       }
 
       isSubscribed = false
-
+      // dispatch触发listener过程也有可能执行了unsubscribe，所以这里也要浅复制
       ensureCanMutateNextListeners()
       const index = nextListeners.indexOf(listener)
       nextListeners.splice(index, 1)
@@ -235,20 +270,22 @@ export default function createStore<
    * return something else (for example, a Promise you can await).
    */
   function dispatch(action: A) {
+    // action必须是纯对象
     if (!isPlainObject(action)) {
       throw new Error(
         `Actions must be plain objects. Instead, the actual type was: '${kindOf(
-          action
+            action
         )}'. You may need to add middleware to your store setup to handle dispatching other values, such as 'redux-thunk' to handle dispatching functions. See https://redux.js.org/tutorials/fundamentals/part-4-store#middleware and https://redux.js.org/tutorials/fundamentals/part-6-async-logic#using-the-redux-thunk-middleware for examples.`
       )
     }
-
+    // action必须传type
     if (typeof action.type === 'undefined') {
       throw new Error(
         'Actions may not have an undefined "type" property. You may have misspelled an action type string constant.'
       )
     }
-
+    // 下面的isDispatching在进入currentReducer前设为true，这里如果不加现在，那么进入reducer
+    // 中又dispatch，那不就是陷入死循环了吗，还有reducer要求是纯函数，那么不应该执行dispatch这种具有副作用的操作
     if (isDispatching) {
       throw new Error('Reducers may not dispatch actions.')
     }
@@ -263,6 +300,18 @@ export default function createStore<
     const listeners = (currentListeners = nextListeners)
     for (let i = 0; i < listeners.length; i++) {
       const listener = listeners[i]
+      /** 
+       * ensureCanMutateNextListeners就是为了避免这里的listener又subscribe了，
+       * 第一个listener对应第一个subscribe的回调函数
+       * subscribe(() => {
+       *  console.log('subscribe1')
+       *  subscribe(() => {
+       *    console.log('subscribe2')
+       *  })
+       * })
+       * 如果不浅复制，那么第一次listener.length = 1,到了内部的subscribe(() => console.log('subscribe2')),
+       * nextListeners又push了，导致listener.length = 2
+       */
       listener()
     }
 
@@ -355,6 +404,7 @@ export default function createStore<
   // When a store is created, an "INIT" action is dispatched so that every
   // reducer returns their initial state. This effectively populates
   // the initial state tree.
+  // 初始化store的数据
   dispatch({ type: ActionTypes.INIT } as A)
 
   const store = {
