@@ -33,8 +33,11 @@ function Provider({ store, context, children }: ProviderProps) {
   useIsomorphicLayoutEffect(() => {
     const { subscription } = contextValue
     subscription.onStateChange = subscription.notifyNestedSubs
+    // trySubscribe会将onStateChange，实际上是notifyNestedSubs放入store的listener，
+    // 那么store改变就会通知listener，那么notifyNestedSubs就会执行了
     subscription.trySubscribe()
     if (previousState !== store.getState()) {
+      // 前后state不同的话就通知嵌套的订阅
       subscription.notifyNestedSubs()
     }
     return () => {

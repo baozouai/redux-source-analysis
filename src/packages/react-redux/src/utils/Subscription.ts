@@ -109,27 +109,29 @@ const nullListeners = {
  * @param parentSub 有值的话parentSub会将handleChangeWrapper放入listeners中
  */
 export function createSubscription(store: any, parentSub?: Subscription) {
+  
   let unsubscribe: VoidFunc | undefined
   let listeners: ListenerCollection = nullListeners
-
+  /** 添加嵌套的订阅，并返回取消的订阅 */
   function addNestedSub(listener: () => void) {
     trySubscribe()
     return listeners.subscribe(listener)
   }
-
+  /** 通知嵌套的订阅 */
   function notifyNestedSubs() {
     listeners.notify()
   }
-
+  /** 实际上就是 onStateChange */
   function handleChangeWrapper() {
     subscription.onStateChange?.()
   }
-
+  /** 通过unsubscribe是否有值来判断是否订阅了 */
   function isSubscribed() {
     return Boolean(unsubscribe)
   }
-
+  /** 尝试订阅，如果unsubscribe有值意味着已经订阅了，那么就不再执行订阅 */
   function trySubscribe() {
+    // 通过unsubscribe是否有值来判断是否订阅了，即只订阅一次
     if (!unsubscribe) {
       // 对于Provider，没有parentSub，那么会调用store.subscribe,其他的有parentSub。
       // 每次dispatch后store会执行每个listener，
@@ -142,7 +144,7 @@ export function createSubscription(store: any, parentSub?: Subscription) {
       listeners = createListenerCollection()
     }
   }
-
+  /** 尝试去掉订阅，unsubscribe有值才行，且清空listeners */
   function tryUnsubscribe() {
     if (unsubscribe) {
       unsubscribe()
