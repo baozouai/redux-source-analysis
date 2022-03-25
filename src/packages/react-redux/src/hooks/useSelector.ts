@@ -22,6 +22,7 @@ export function createSelectorHook(
   selector: (state: TState) => Selected,
   equalityFn?: EqualityFn<Selected>
 ) => Selected {
+  // 根据传入context是否是内置context来决定使用不同的函数，这里实际上可以统一为
   const useReduxContext =
     context === ReactReduxContext
       ? useDefaultReduxContext
