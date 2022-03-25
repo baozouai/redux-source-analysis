@@ -403,16 +403,19 @@ export default function createStore<
             )}'`
           )
         }
-
+        // 这里会作为listener
         function observeState() {
           const observerAsObserver = observer as Observer<S>
           if (observerAsObserver.next) {
+            // state改变的时候回通知listener，即调用observeState，那么这里就能获取到最新的state了
             observerAsObserver.next(getState())
           }
         }
-
+        // 第一次
         observeState()
+        // 添加订阅
         const unsubscribe = outerSubscribe(observeState)
+        // 返回取消订阅
         return { unsubscribe }
       },
 
