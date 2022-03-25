@@ -57,6 +57,7 @@ type EffectFunc = (...args: any[]) => void | ReturnType<React.EffectCallback>
 // - we need to fall back to `useEffect` in SSR to avoid annoying warnings
 // - we extract this to a separate function to avoid closing over values
 //   and causing memory leaks
+// 这个实际上就是useLayoutEffect，但在SSR中会替换成useEffect，以避免warning
 function useIsomorphicLayoutEffectWithArgs(
   effectFunc: EffectFunc,
   effectArgs: any[],
@@ -513,13 +514,7 @@ function connect<
     context = ReactReduxContext,
   }: ConnectOptions<unknown, unknown, unknown, unknown> = {}
 ): unknown {
-  if (process.env.NODE_ENV !== 'production') {
-    if (pure !== undefined) {
-      throw new Error(
-        'The `pure` option has been removed. `connect` is now always a "pure/memoized" component'
-      )
-    }
-  }
+
   // debugger
   const Context = context
 
@@ -529,6 +524,7 @@ function connect<
     mapStateToProps,
     // @ts-ignore
     defaultMapStateToPropsFactories,
+    // 第三个参数只是用来match不到的时候报错提示用而已
     'mapStateToProps'
   )!
   /** mapDispatchToProps为空则是initConstantSelector，否则是initProxySelector */
@@ -536,6 +532,7 @@ function connect<
     mapDispatchToProps,
     // @ts-ignore
     defaultMapDispatchToPropsFactories,
+    // 第三个参数只是用来match不到的时候报错提示用而已
     'mapDispatchToProps'
   )!
   /** mergeProps为空则是() => defaultMergeProps，否则是initMergePropsProxy */
@@ -543,6 +540,7 @@ function connect<
     mergeProps,
     // @ts-ignore
     defaultMergePropsFactories,
+    // 第三个参数只是用来match不到的时候报错提示用而已
     'mergeProps'
   )!
   // 有传mapStateToProps才需要处理当store中的state变化要做相应的处理
@@ -659,7 +657,7 @@ function connect<
       }
 
       // Based on the previous check, one of these must be true
-      // store来着两处： 1. props; 2.context
+      // store来着两处： 1. props; 2.context，优先取props.store
       const store: Store = didStoreComeFromProps
         ? props.store!
         : contextValue!.store
@@ -687,7 +685,7 @@ function connect<
 
         // This Subscription's source should match where store came from: props vs. context. A component
         // connected to the store via props shouldn't use subscription from context, or vice versa.
-        // 这里需要 判断store是来着props还是context，如果来着props，说明是顶级，无需传parentSub
+        // 这里需要 判断store是来自props还是context，如果来自props，说明是顶级，无需传parentSub
         // 否则是来自context，那么将context的subscription作为新生成的subscription的parentSub
         const subscription = createSubscription(
           store,

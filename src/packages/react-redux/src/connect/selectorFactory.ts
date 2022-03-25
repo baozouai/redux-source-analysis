@@ -270,7 +270,7 @@ export default function finalPropsSelectorFactory<
    * }
    * */
   const mapStateToProps = initMapStateToProps(dispatch, options)
-  /** 最开始connect传入的mapDispatchToProps为空或对象(值都为函数)，那么跟上面第一种情况，是函数就第二种 */
+  /** 最开始connect传入的mapDispatchToProps为空或对象(值都为函数)，那么跟上面第一种情况一样，如果是函数就第二种 */
   const mapDispatchToProps = initMapDispatchToProps(dispatch, options)
   /**
    * @example

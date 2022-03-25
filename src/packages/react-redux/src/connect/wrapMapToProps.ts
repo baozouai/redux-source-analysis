@@ -95,8 +95,8 @@ export function wrapMapToPropsFunc<P = AnyProps>(
   ) {
     /** 
      * 代理mapToProps
-     * dependsOnOwnProps表示是否依赖onwProps，如mapStateToProps(state, ownProops), 
-     * mapDispatchToProps(dispatch, ownProops)，不依赖就不传,
+     * dependsOnOwnProps表示是否依赖onwProps，如mapStateToProps(state, ownProps)、
+     * mapDispatchToProps(dispatch, ownProps)，不依赖就不传,
      * 所以下面的第一个参数才叫stateOrDispatch，mapToProps有可能是mapStateToProps或mapDispatchToProps
      * */
     const proxy = function mapToPropsProxy(
@@ -142,14 +142,16 @@ export function wrapMapToPropsFunc<P = AnyProps>(
       let props = proxy(stateOrDispatch, ownProps)
 
       if (typeof props === 'function') {
+        // 如果props是函数，意味着上面的mapToProps是工厂函数，运行后得到的props才是真正的mapToProps
         proxy.mapToProps = props
         proxy.dependsOnOwnProps = getDependsOnOwnProps(props)
+        // 那么再执行一次，比如上面例子，这里得到的props才是 { blogs: xxx }
         props = proxy(stateOrDispatch, ownProps)
       }
 
       if (process.env.NODE_ENV !== 'production')
         verifyPlainObject(props, displayName, methodName)
-
+      // 反正到了这里才得到了纯对象
       return props
     }
     return proxy

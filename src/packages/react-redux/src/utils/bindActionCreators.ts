@@ -1,5 +1,5 @@
 import { ActionCreatorsMapObject, Dispatch } from 'redux'
-
+/** 针对于mapDispatchToProps为对象的情况，要求value为函数 */
 export default function bindActionCreators(
   actionCreators: ActionCreatorsMapObject,
   dispatch: Dispatch
