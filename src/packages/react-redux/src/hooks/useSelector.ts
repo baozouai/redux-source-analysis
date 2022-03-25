@@ -9,6 +9,8 @@ import { DefaultRootState, EqualityFn } from '../types'
 const refEquality: EqualityFn<any> = (a, b) => a === b
 
 /**
+ * @description `useSelector` 的工厂函数
+ * 
  * Hook factory, which creates a `useSelector` hook bound to a given context.
  *
  * @param {React.Context} [context=ReactReduxContext] Context passed to your `<Provider>`.
@@ -30,12 +32,15 @@ export function createSelectorHook(
     equalityFn: EqualityFn<Selected> = refEquality
   ): Selected {
     if (process.env.NODE_ENV !== 'production') {
+      // 必须传selector
       if (!selector) {
         throw new Error(`You must pass a selector to useSelector`)
       }
+      // selector必须为函数
       if (typeof selector !== 'function') {
         throw new Error(`You must pass a function as a selector to useSelector`)
       }
+      // equalityFn必须为函数，返回一个是否equal的boolean，有默认值，即(a, b) => a === b
       if (typeof equalityFn !== 'function') {
         throw new Error(
           `You must pass a function as an equality function to useSelector`
@@ -44,7 +49,7 @@ export function createSelectorHook(
     }
 
     const { store } = useReduxContext()!
-
+    // 获取select的state并返回
     const selectedState = useSyncExternalStoreExtra(
       store.subscribe,
       store.getState,
