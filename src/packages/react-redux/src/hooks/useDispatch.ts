@@ -9,6 +9,8 @@ import { useStore as useDefaultStore, createStoreHook } from './useStore'
 import { RootStateOrAny } from '../types'
 
 /**
+ * @description useDispatch的工厂函数
+ * 
  * Hook factory, which creates a `useDispatch` hook bound to a given context.
  *
  * @param {React.Context} [context=ReactReduxContext] Context passed to your `<Provider>`.
@@ -19,9 +21,7 @@ export function createDispatchHook<
   A extends Action = AnyAction
   // @ts-ignore
 >(context?: Context<ReactReduxContextValue<S, A>> = ReactReduxContext) {
-  const useStore =
-    // @ts-ignore
-    context === ReactReduxContext ? useDefaultStore : createStoreHook(context)
+  const useStore = context === ReactReduxContext ? useDefaultStore : createStoreHook(context)
 
   return function useDispatch<
     AppDispatch extends Dispatch<A> = Dispatch<A>

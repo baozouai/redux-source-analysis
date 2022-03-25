@@ -15,8 +15,19 @@ import { Subscribe, Instance } from './type'
 //
 // Do not assume that the clever hacks used by this hook also work in general.
 // The point of this shim is to replace the need for hacks by other libraries.
+// 这个打破了很多react的规则，只有在一组特定的实现细节和假设条件下才能起作用——改变其中任何一个细节和假设条件，它就会不起作用。
+// 最重要的假设是更新总是同步的，因为concurrent的渲染是只在有内置useSyncExternalStore的react版本中才起作用
+// 不要以为这个hook使用的奇淫巧技也适用于一般情况，
+// 这个shim(垫片)的意义在于取代其他库对hack的需求
 
-
+/**
+ * @description 总的作用就是检查快照是否改变，改变的话就触发强制更新
+ * 
+ * @param subscribe 订阅函数
+ * @param getSnapshot 获取快照的方法
+ * @param getServerSnapshot 获取服务端快照的方法，目前没用
+ * @returns 
+ */
 export function useSyncExternalStore<Snapshot>(
   subscribe: Subscribe,
   getSnapshot: () => Snapshot,
@@ -57,6 +68,7 @@ export function useSyncExternalStore<Snapshot>(
   // Track the latest getSnapshot function with a ref. This needs to be updated
   // in the layout phase so we can access it during the tearing check that
   // happens on subscribe.
+  // 页面更新前同步最新的value和getSnapshot
   useLayoutEffect(() => {
     inst.value = value;
     inst.getSnapshot = getSnapshot;
@@ -67,7 +79,7 @@ export function useSyncExternalStore<Snapshot>(
     // effect may have mutated the store.
     /**
      * 无论getSnapshot或subscribe改变，都要检查commit阶段是否有交叉的mutation(突变)，
-     * 在concurrent模式下，这种情况可能一直会发生，不过即使在同步模式在，一个早一点的effect也
+     * 在concurrent模式下，这种情况可能一直会发生，不过即使在同步模式也可能会，即一个早一点的effect也
      * 可能会对store有突变
      */
     if (checkIfSnapshotChanged(inst)) {
@@ -76,11 +88,11 @@ export function useSyncExternalStore<Snapshot>(
       forceUpdate({ inst });
     }
   }, [subscribe, value, getSnapshot]);
-
+  // 异步调度后也检查下快照是否改变
   useEffect(() => {
     // Check for changes right before subscribing. Subsequent changes will be
     // detected in the subscription handler.
-    // 在订阅之前检查更改，虽有的change会在handleStoreChange检测
+    // 在订阅之前检查更改，随后的change会在handleStoreChange检测
     if (checkIfSnapshotChanged(inst)) {
       // Force a re-render.
       forceUpdate({ inst });

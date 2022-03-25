@@ -8,7 +8,7 @@ import { Subscribe, InstanceExtra } from './type'
 
 // Same as useSyncExternalStore, but supports selector and isEqual arguments.
 /**
- * @description 和useSyncExternalStore类似，但支持selector和isEqual参数
+ * @description 和useSyncExternalStore类似，但多了支持selector和isEqual参数
  * @param subscribe 订阅
  * @param getSnapshot 获取快照，用于client
  * @param getServerSnapshot 获取服务端快照
@@ -75,7 +75,7 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
           // Even if the selector has changed, the currently rendered selection
           // may be equal to the new selection. We should attempt to reuse the
           // current value if possible, to preserve downstream memoizations.
-          // 即使selector改变了，新旧的selector可能相等，可以的话，尝试复用旧的数据，保持单向数据流数据地址不变
+          // 即使selector改变了，新旧的selection可能相等，可以的话，尝试复用旧的数据，保持单向数据流数据地址不变
           if (inst.hasValue) {
             const currentSelection = inst.value;
             if (isEqual(currentSelection, nextSelection)) {
@@ -85,7 +85,7 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
             }
           }
         }
-        // 否则没有isEqual，或者新旧数据判断不相等，那么赋值新数据并返回
+        // 没有isEqual，或者新旧数据判断不相等，那么赋值新数据并返回
         memoizedSelection = nextSelection;
         return nextSelection;
       }
