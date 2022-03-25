@@ -9,7 +9,7 @@ export interface ReactReduxContextValue<
   store: Store<SS, A>
   subscription: Subscription
 }
-
+/** 内置的context */
 export const ReactReduxContext =
   /*#__PURE__*/ React.createContext<ReactReduxContextValue>(null as any)
 
