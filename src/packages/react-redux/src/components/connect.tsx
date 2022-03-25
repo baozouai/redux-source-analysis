@@ -543,7 +543,7 @@ function connect<
     // 第三个参数只是用来match不到的时候报错提示用而已
     'mergeProps'
   )!
-  // 有传mapStateToProps才需要处理当store中的state变化要做相应的处理
+  /** 有传mapStateToProps才需要处理当store中的state变化要做相应的处理 */
   const shouldHandleStateChanges = Boolean(mapStateToProps)
     /**
      * 调用connext后会返回wrapWithConnect，其接收一个组件作为参数
@@ -723,9 +723,9 @@ function connect<
       }, [didStoreComeFromProps, contextValue, subscription])
 
       // Set up refs to coordinate values between the subscription effect and the render logic
-      /** 更新前传给connect后组件的props，包括传给WrappedComponent的、mapStateToProps、mapDispatchToProps执行后得到的 */
+      /** 更新前传给connect后的组件的props，包括传给WrappedComponent的、mapStateToProps、mapDispatchToProps执行后得到的 */
       const lastChildProps = useRef<unknown>()
-      /** 更新前传给WrappedComponent的Props */
+      /** 更新前传给WrappedComponent的Props，即ownProps */
       const lastWrapperProps = useRef(wrapperProps)
       /** 来自sotre的props是否更新,只有store更新了才有值，否则都是undefined */
       const childPropsFromStoreUpdate = useRef<unknown>()
