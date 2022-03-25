@@ -73,7 +73,8 @@ export default function createStore<
     (typeof preloadedState === 'function' && typeof enhancer === 'function') ||
     (typeof enhancer === 'function' && typeof arguments[3] === 'function')
   ) {
-    // 不允许preloadedState和enhancer同时为函数，有多个middleware要用applyMiddleware处理
+    // 1.不允许preloadedState和enhancer同时为函数，
+    // 2.有多个middleware要用applyMiddleware处理
     throw new Error(
       'It looks like you are passing several store enhancers to ' +
         'createStore(). This is not supported. Instead, compose them ' +
@@ -83,6 +84,7 @@ export default function createStore<
   // 如果preloadedState为函数且没有传enhander，那么将preloadedState作为enhancer
   if (typeof preloadedState === 'function' && typeof enhancer === 'undefined') {
     enhancer = preloadedState as StoreEnhancer<Ext, StateExt>
+    // 注意这里要置空
     preloadedState = undefined
   }
 
@@ -155,6 +157,7 @@ export default function createStore<
    * @returns The current state tree of your application.
    */
   function getState(): S {
+    // 执行reducer过程中不允许getState，正确的做法是从reducer接收state，而不是通过store.getState
     if (isDispatching) {
       throw new Error(
         'You may not call store.getState() while the reducer is executing. ' +
@@ -186,6 +189,9 @@ export default function createStore<
    * registered before the `dispatch()` started will be called with the latest
    * state by the time it exits.
    *
+    * 1. 每次 dispatch() 前订阅都会做一次快照。如果在调用侦听器时订阅或取消订阅，不会对当前的 dispatch()产生任何影响。
+    * 然而，下一个' dispatch() '调用，无论是否嵌套，都将使用订阅的最新快照。也就是说，dispatch过程中增加或减少的订阅不会
+    * 在这次体现，而会出现在下次dispatch
    * @param listener A callback to be invoked on every dispatch.
    * @returns A function to remove this change listener.
    */
@@ -210,7 +216,8 @@ export default function createStore<
        * } finally {
        *   isDispatching = false
        * }
-       * 如果在reducer函数的过程中又调用了store.subscribe，那么isDispatch就会为true
+       * 如果在reducer函数的过程中又调用了store.subscribe，那么isDispatch就会为true，也就是说dispatch过程中
+       * 不允许subscribe
        */
       throw new Error(
         'You may not call store.subscribe() while the reducer is executing. ' +
@@ -227,7 +234,7 @@ export default function createStore<
 
     return function unsubscribe() {
       if (!isSubscribed) return
-
+      // 运行reducer过程中isDispatching为true，这个时候不允许unsubscribe
       if (isDispatching) {
         throw new Error(
           'You may not unsubscribe from a store listener while the reducer is executing. ' +
@@ -238,6 +245,7 @@ export default function createStore<
       isSubscribed = false
       // dispatch触发listener过程也有可能执行了unsubscribe，所以这里也要浅复制
       ensureCanMutateNextListeners()
+      // 去掉该listener
       const index = nextListeners.indexOf(listener)
       nextListeners.splice(index, 1)
       currentListeners = null
@@ -245,13 +253,20 @@ export default function createStore<
   }
 
   /**
+   * @description dispatch一个action，这是唯一触发state改变的方式
+   * 
    * Dispatches an action. It is the only way to trigger a state change.
    *
+   * reducer是用来创建store的，会被当前state和action调用，其返回值会被视为新的state，且会通知
+   * listener
    * The `reducer` function, used to create the store, will be called with the
    * current state tree and the given `action`. Its return value will
    * be considered the **next** state of the tree, and the change listeners
    * will be notified.
    *
+   * 基础实现只支持纯对象的action，如果想dispatch一个promise、Observable、thunk或其他的，
+   * 那么需要相关的中间件
+   * 比如，可以参考 `redux-thunk`的文档，中间件最终也会dispatch一个纯对象
    * The base implementation only supports plain object actions. If you want to
    * dispatch a Promise, an Observable, a thunk, or something else, you need to
    * wrap your store creating function into the corresponding middleware. For
@@ -284,7 +299,7 @@ export default function createStore<
         'Actions may not have an undefined "type" property. You may have misspelled an action type string constant.'
       )
     }
-    // 下面的isDispatching在进入currentReducer前设为true，这里如果不加现在，那么进入reducer
+    // 下面的isDispatching在进入currentReducer前设为true，这里如果不加限制，那么进入reducer
     // 中又dispatch，那不就是陷入死循环了吗，还有reducer要求是纯函数，那么不应该执行dispatch这种具有副作用的操作
     if (isDispatching) {
       throw new Error('Reducers may not dispatch actions.')
@@ -319,6 +334,9 @@ export default function createStore<
   }
 
   /**
+   * @description 替换当前的reducer然后计算新的state，一般出现在你的应用有代码分隔，且想要动态地传入reducer，
+   *              或者有热重置的机制
+   * 
    * Replaces the reducer currently used by the store to calculate the state.
    *
    * You might need this if your app implements code splitting and you want to
@@ -346,8 +364,10 @@ export default function createStore<
     // Any reducers that existed in both the new and old rootReducer
     // will receive the previous state. This effectively populates
     // the new state tree with any relevant data from the old one.
+    // 因为替换reducer了，那么这里也是类似初始化的作用
     dispatch({ type: ActionTypes.REPLACE } as A)
     // change the type of the store by casting it to the new store
+    // 返回新的store
     return store as unknown as Store<
       ExtendState<NewState, StateExt>,
       NewActions,
@@ -369,12 +389,13 @@ export default function createStore<
       /**
        * The minimal observable subscription method.
        * @param observer Any object that can be used as an observer.
-       * The observer object should have a `next` method.
+       * The observer object should have a `next` method. observer必须有next方法
        * @returns An object with an `unsubscribe` method that can
        * be used to unsubscribe the observable from the store, and prevent further
        * emission of values from the observable.
        */
       subscribe(observer: unknown) {
+        // 必须的对象
         if (typeof observer !== 'object' || observer === null) {
           throw new TypeError(
             `Expected the observer to be an object. Instead, received: '${kindOf(
