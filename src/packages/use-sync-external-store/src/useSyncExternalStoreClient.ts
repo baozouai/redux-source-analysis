@@ -60,12 +60,18 @@ export function useSyncExternalStore<Snapshot>(
   useLayoutEffect(() => {
     inst.value = value;
     inst.getSnapshot = getSnapshot;
-
+    
     // Whenever getSnapshot or subscribe changes, we need to check in the
     // commit phase if there was an interleaved mutation. In concurrent mode
     // this can happen all the time, but even in synchronous mode, an earlier
     // effect may have mutated the store.
+    /**
+     * 无论getSnapshot或subscribe改变，都要检查commit阶段是否有交叉的mutation(突变)，
+     * 在concurrent模式下，这种情况可能一直会发生，不过即使在同步模式在，一个早一点的effect也
+     * 可能会对store有突变
+     */
     if (checkIfSnapshotChanged(inst)) {
+      // 快照改变则强制更新
       // Force a re-render.
       forceUpdate({ inst });
     }
@@ -74,6 +80,7 @@ export function useSyncExternalStore<Snapshot>(
   useEffect(() => {
     // Check for changes right before subscribing. Subsequent changes will be
     // detected in the subscription handler.
+    // 在订阅之前检查更改，虽有的change会在handleStoreChange检测
     if (checkIfSnapshotChanged(inst)) {
       // Force a re-render.
       forceUpdate({ inst });
@@ -86,7 +93,7 @@ export function useSyncExternalStore<Snapshot>(
 
       // The store changed. Check if the snapshot changed since the last time we
       // read from the store.
-      // store变化后的回调
+      // store变化后的回调，那么检查快照是否变了，是的话强制更新
       if (checkIfSnapshotChanged(inst)) {
         // Force a re-render.
         forceUpdate({ inst });
@@ -99,7 +106,9 @@ export function useSyncExternalStore<Snapshot>(
   useDebugValue(value);
   return value;
 }
-
+/**
+ * @description 检查快照是否改变了
+ */
 function checkIfSnapshotChanged<Snapshot>(inst: Instance<Snapshot>) {
   const latestGetSnapshot = inst.getSnapshot;
   const prevValue = inst.value;

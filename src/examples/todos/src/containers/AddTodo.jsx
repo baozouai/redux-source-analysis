@@ -3,7 +3,7 @@ import { addTodo } from '../actions'
 
 const AddTodo = () => {
   let input
-  useSelector(state => ({}), () => true)
+  const { visibilityFilter } = useSelector(state => ({ visibilityFilter: state.visibilityFilter }))
   const dispatch = useDispatch()
   debugger
   return (
@@ -21,6 +21,7 @@ const AddTodo = () => {
           Add Todo
         </button>
         <button onClick={() => input.value = ''}>reset</button>
+        <div>visibilityFilter: {visibilityFilter}</div>
       </form>
     </div>
   )

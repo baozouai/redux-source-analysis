@@ -7,6 +7,15 @@ import { Subscribe, InstanceExtra } from './type'
 
 
 // Same as useSyncExternalStore, but supports selector and isEqual arguments.
+/**
+ * @description 和useSyncExternalStore类似，但支持selector和isEqual参数
+ * @param subscribe 订阅
+ * @param getSnapshot 获取快照，用于client
+ * @param getServerSnapshot 获取服务端快照
+ * @param selector 选择器，从state中挑选需要的state
+ * @param isEqual 是否相等
+ * @returns 返回selector的state
+ */
 export function useSyncExternalStoreExtra<Snapshot, Selection>(
   subscribe: Subscribe,
   getSnapshot: () => Snapshot,
@@ -16,14 +25,24 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
 ): Selection {
   // Use this to track the rendered snapshot.
   const instRef = useRef<InstanceExtra<Selection>>(null);
-  let inst: InstanceExtra<Selection>;
+  let inst: InstanceExtra<Selection>
+  /** 
+   * 下面的区分情况是为了避免：
+   * Warning: App: Unsafe read of a mutable value during render.
+   * 
+   * Reading from a ref during render is only safe if:
+   * 1. The ref value has not been updated, or
+   * 2. The ref holds a lazily-initialized value that is only set once.
+   */
   if (instRef.current === null) {
+    // 初始值
     inst = {
       hasValue: false,
       value: null,
     };
     instRef.current = inst;
   } else {
+    // update的值
     inst = instRef.current;
   }
 
@@ -32,6 +51,8 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
     // memoized instance of a getSnapshot function. Intentionally not using a
     // useRef hook, because that state would be shared across all concurrent
     // copies of the hook/component.
+    // 使用 getSnapshot 函数的这个 memoized 实例的本地闭包变量来跟踪 memoized 状态。
+    // 故意不使用 useRef 挂钩，因为该状态会在 concurrent 模式下的所有 hook/component 中共享
     let hasMemo = false;
     let memoizedSnapshot;
     let memoizedSelection;
@@ -41,29 +62,34 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
      * @returns nextSelection 从store中选择的数据
      */
     const memoizedSelector = nextSnapshot => {
-      // snapShot是store中的左右数据，selection是从store中挑选的数据
+      // snapShot是store中的所有即时数据，selection是从store中挑选的数据
       if (!hasMemo) {
-        // 第一次调用memoizedSelector的时候
+        // 第一次调用memoizedSelector的时候，这个时候还没memoized
         // The first time the hook is called, there is no memoized result.
         hasMemo = true;
+        // 做下缓存
         memoizedSnapshot = nextSnapshot;
+        // 根据选择器中store中拿到要挑选的数据
         const nextSelection = selector(nextSnapshot);
         if (isEqual !== undefined) {
           // Even if the selector has changed, the currently rendered selection
           // may be equal to the new selection. We should attempt to reuse the
           // current value if possible, to preserve downstream memoizations.
+          // 即使selector改变了，新旧的selector可能相等，可以的话，尝试复用旧的数据，保持单向数据流数据地址不变
           if (inst.hasValue) {
             const currentSelection = inst.value;
             if (isEqual(currentSelection, nextSelection)) {
+              // 根据传入的isEqual函数判断新旧数据相等的话，那么复用旧数据就好了，那么prop就不会改变
               memoizedSelection = currentSelection;
               return currentSelection;
             }
           }
         }
+        // 否则没有isEqual，或者新旧数据判断不相等，那么赋值新数据并返回
         memoizedSelection = nextSelection;
         return nextSelection;
       }
-      // 第二次及之后调用该memoizedSelector的时候
+      // 第二次及之后调用该memoizedSelector的时候，保存memo的值，即上次的
       // We may be able to reuse the previous invocation's result.
       const prevSnapshot: Snapshot = memoizedSnapshot;
       const prevSelection: Selection = memoizedSelection;
@@ -95,7 +121,7 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
         // The snapshot is the same as last time. Reuse the previous selection.
         return prevSelection;
       }
-      // 到了这里store中的数据已经发生改变
+      // 到了这里store中的数据已经发生改变，那么就要计算新的selection了
       // The snapshot has changed, so we need to compute a new selection.
       const nextSelection = selector(nextSnapshot);
 
@@ -129,7 +155,7 @@ export function useSyncExternalStoreExtra<Snapshot, Selection>(
         : () => memoizedSelector(maybeGetServerSnapshot());
     return [getSnapshotWithSelector, getServerSnapshotWithSelector];
   }, [getSnapshot, getServerSnapshot, selector, isEqual]);
-
+  // 返回selection
   const value = useSyncExternalStore(
     subscribe,
     getSelection,
