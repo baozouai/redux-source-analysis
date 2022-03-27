@@ -21,25 +21,24 @@ class Counter extends Component {
   render() {
     const { value, onIncrement, onDecrement } = this.props
     return (
-      <p>
-        Clicked: {value} times
-        {' '}
-        <button onClick={onIncrement}>
-          +
-        </button>
-        {' '}
-        <button onClick={onDecrement}>
-          -
-        </button>
-        {' '}
-        <button onClick={this.incrementIfOdd}>
-          Increment if odd
-        </button>
-        {' '}
-        <button onClick={this.incrementAsync}>
-          Increment async
-        </button>
-      </p>
+      <div>
+        <p>Clicked: {value} times</p>
+        <div>
+          <button onClick={onIncrement}>+</button>
+        </div>
+        <div>
+          <button onClick={onDecrement}>-</button>
+        </div>
+
+        <div>
+          <button onClick={this.incrementIfOdd}>Increment if odd</button>
+        </div>
+
+        <div>
+          <button onClick={this.incrementAsync}>Increment async</button>
+        </div>
+      </div>
+
     )
   }
 }

@@ -7,7 +7,7 @@ import TodosWithUndo from '@/examples/todos-with-undo'
 import TreeView from '@/examples/tree-view'
 import { Routes, Route, Outlet } from 'react-router'
 import { Link } from 'react-router-dom'
-
+import './App.css'
 const routeConfigs = [
   {
     path: 'async',
