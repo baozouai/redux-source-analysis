@@ -11,25 +11,25 @@ redux、react-redux及相关中间件源码分析
 - [use-sync-external-store](./src/packages/use-sync-external-store)
 ## examples
 
-- [async](./src/examples/async)
+- [async](./src/examples/async/index.jsx)
   ![async](assets/async.png)
 
-- [counter](./src/examples/counter)
+- [counter](./src/examples/counter/index.jsx)
   ![counter](assets/counter.png)
 
-- [shoppint-cart](./src/examples/shopping-cart)
+- [shoppint-cart](./src/examples/shopping-cart/index.jsx)
   ![shoppint-cart](assets/shopping-cart.png)
 
-- [todomvc](./src/examples/todomvc)
+- [todomvc](./src/examples/todomvc/index.jsx)
   ![todomvc](assets/todomvc.png)
 
-- [todos](./src/examples/todos)
+- [todos](./src/examples/todos/index.jsx)
   ![todos](assets/todos.png)
 
-- [todos-with-undo](./src/examples/todos-with-undo)
+- [todos-with-undo](./src/examples/todos-with-undo/index.jsx)
   ![todos-with-undo](assets/todos-with-undo.png)
 
-- [tree-view](./src/examples/tree-view)
+- [tree-view](./src/examples/tree-view/index.jsx)
   ![tree-view](assets/tree-view.png)
   
 
