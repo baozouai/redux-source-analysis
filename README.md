@@ -3,12 +3,12 @@ redux、react-redux及相关中间件源码分析
 
 ## packages
 
-- [redux](./src/packages/redux)
-- [react-redux](./src/packages/react-redux)
-- [redux-logger](./src/packages/redux-logger)
-- [redux-thunk](./src/packages/redux-thunk)
-- [redux-undo](./src/packages/redux-undo)
-- [use-sync-external-store](./src/packages/use-sync-external-store)
+- [redux](./src/packages/redux/src)
+- [react-redux](./src/packages/react-redux/src)
+- [redux-logger](./src/packages/redux-logger/src)
+- [redux-thunk](./src/packages/redux-thunk/src)
+- [redux-undo](./src/packages/redux-undo/src)
+- [use-sync-external-store](./src/packages/use-sync-external-store/src)
 ## examples
 
 - [async](./src/examples/async/index.jsx)
