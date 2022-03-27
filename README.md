@@ -17,8 +17,8 @@ redux、react-redux及相关中间件源码分析
 - [counter](./src/examples/counter)
   ![counter](assets/counter.png)
 
-- [shoppint-cart](./src/examples/shoppint-cart)
-  ![shoppint-cart](assets/shoppint-cart.png)
+- [shoppint-cart](./src/examples/shopping-cart)
+  ![shoppint-cart](assets/shopping-cart.png)
 
 - [todomvc](./src/examples/todomvc)
   ![todomvc](assets/todomvc.png)
