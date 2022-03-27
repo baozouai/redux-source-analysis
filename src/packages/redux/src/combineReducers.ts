@@ -60,7 +60,7 @@ function getUnexpectedStateShapeWarningMessage(
   }
 }
 /**
- * @description: 检查传入的reducers是否符合要求，default不允许return unfettered，可以return null
+ * @description: 检查传入的reducers是否符合要求，default不允许return undefined，可以return null
  */
 function assertReducerShape(reducers: ReducersMapObject) {
   Object.keys(reducers).forEach(key => {
@@ -197,6 +197,7 @@ export default function combineReducers(reducers: ReducersMapObject) {
         )
       }
       nextState[key] = nextStateForKey
+      // 任一改变则改变
       hasChanged = hasChanged || nextStateForKey !== previousStateForKey
     }
     hasChanged =

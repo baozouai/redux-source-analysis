@@ -52,7 +52,28 @@ export default function compose(...funcs: Function[]) {
   if (funcs.length === 1) {
     return funcs[0]
   }
-
+  /**
+   * @example
+   * function add1(num) {
+   *   console.log(num)
+   *   return num + 1
+   * }
+   * function add2(num) {
+   *   console.log(num)
+   *   return num + 2
+   * }
+   * function add3(num) {
+   *   console.log(num)
+   *   return num + 3
+   * }
+   * [add1, add2, add3].reduce((a, b) =>
+   *   (...args) => a(b(...args))
+   * ))
+   * 其中[add1, add2].reduce(...) => (...arg) => add1(add2(...arg))
+   * 再加上add3，add3作为上面的...arg得到 (...args) => add1(add2(add3(...args)))
+   * 
+   * 这样就实现了后添加的middleware最新执行，然后把结果传给前一个middleware
+   */
   return funcs.reduce(
     (a, b) =>
       (...args: any) =>

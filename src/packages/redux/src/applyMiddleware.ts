@@ -75,6 +75,8 @@ export default function applyMiddleware(
 
       const middlewareAPI: MiddlewareAPI = {
         getState: store.getState,
+        // 这里用函数的方式，是为了避免闭包，这样的话dispatch实际上指向的是下面compose得到的dispatch
+        // 如果直接dispatch: dispatch，那么dispatch指向的是上面会throw error的dispatch
         dispatch: (action, ...args) => dispatch(action, ...args)
       }
       const chain = middlewares.map(middleware => middleware(middlewareAPI))

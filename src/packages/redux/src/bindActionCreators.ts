@@ -24,9 +24,20 @@ function bindActionCreator<A extends AnyAction = AnyAction>(
  * For convenience, you can also pass an action creator as the first argument,
  * and get a dispatch wrapped function in return.
  *
- * @param actionCreators An object whose values are action
- * creator functions. One handy way to obtain it is to use ES6 `import * as`
- * syntax. You may also pass a single function.
+ * @param actionCreators 
+ * @example
+ * 可以是一个函数，如 addTodo = text => ({ type: types.ADD_TODO, text })，
+ * 也可以是对象，如 
+ *               import * as TodoActions from '../actions'
+ *               TodoActions = {
+ *                addTodo: text => ({ type: types.ADD_TODO, text }),
+ *                deleteTodo: id => ({ type: types.DELETE_TODO, id }), 
+ *                ...
+ *              }
+ *               const mapDispatchToProps = dispatch => ({
+ *                actions: bindActionCreators(TodoActions, dispatch)
+ *               })
+ *              
  *
  * @param dispatch The `dispatch` function available on your Redux
  * store.
