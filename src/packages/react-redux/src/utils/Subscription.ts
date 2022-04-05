@@ -67,7 +67,7 @@ function createListenerCollection() {
         if (!isSubscribed || first === null) return
         // 标志已经取消了订阅
         isSubscribed = false
-        // 如果该listener有后缀，那么其后缀的pre之前前缀
+        // 如果该listener有后缀，那么其后缀的pre指向该listener的前缀
         if (listener.next) {
           listener.next.prev = listener.prev
         } else {
@@ -75,7 +75,7 @@ function createListenerCollection() {
           last = listener.prev
         }
         if (listener.prev) {
-          // 如果listener有前缀，那么前缀的next之前该listener的后缀
+          // 如果listener有前缀，那么前缀的next指向该listener的后缀
           listener.prev.next = listener.next
         } else {
           // 没有前缀，意味着是第一个，那么指向后面

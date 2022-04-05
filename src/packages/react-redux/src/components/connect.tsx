@@ -637,7 +637,7 @@ function connect<
         Boolean(props.store) &&
         Boolean(props.store.getState) &&
         Boolean(props.store.dispatch)
-        // store是否来着context
+        // store是否来着context，大部分情况下store都来自context，一般store来自props是Provider组件
       const didStoreComeFromContext =
         Boolean(contextValue) && Boolean(contextValue!.store)
 
