@@ -39,7 +39,7 @@ export function createDispatchHook<
  *
  * @example
  *
- * import React, { useCallback } from 'react'
+ * import { useCallback } from 'react'
  * import { useDispatch } from 'react-redux'
  *
  * export const CounterComponent = ({ value }) => {
