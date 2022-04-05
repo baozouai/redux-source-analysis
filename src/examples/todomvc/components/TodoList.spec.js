@@ -1,4 +1,3 @@
-import React from 'react'
 import { createRenderer } from 'react-test-renderer/shallow';
 import TodoList from './TodoList'
 import TodoItem from './TodoItem'

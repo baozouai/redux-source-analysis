@@ -1,4 +1,3 @@
-import React from 'react'
 import { shallow } from 'enzyme'
 import Cart from './Cart'
 import Product from './Product'

@@ -118,7 +118,7 @@ export default function createStore<
   let nextListeners = currentListeners
   /**
    * 是否正在dispatch，dispatch后执行完reducer才置为false
-    * 即每次dispatch后只有等到 store中的数据变更完成后才允许执行下一次变更，避免store响应多个dispatch时结果不同步的问题；
+    * 即每次dispatch后只有等到 store 中的数据变更完成后才允许执行下一次变更，避免store响应多个dispatch时结果不同步的问题；
     * 如果需要异步dispatch需要通过添加中间件实现
    */
   let isDispatching = false
@@ -157,7 +157,7 @@ export default function createStore<
    * @returns The current state tree of your application.
    */
   function getState(): S {
-    // 执行reducer过程中不允许getState，正确的做法是从reducer接收state，而不是通过store.getState
+    // 执行reducer过程中不允许getState，正确的做法是从reducer第一个参数中接收state，而不是通过store.getState
     if (isDispatching) {
       throw new Error(
         'You may not call store.getState() while the reducer is executing. ' +
@@ -189,7 +189,7 @@ export default function createStore<
    * registered before the `dispatch()` started will be called with the latest
    * state by the time it exits.
    *
-    * 1. 每次 dispatch() 前订阅都会做一次快照。如果在调用侦听器时订阅或取消订阅，不会对当前的 dispatch()产生任何影响。
+    * 1. 每次 dispatch() 前订阅都会做一次快照。如果在调用listener时订阅或取消订阅，不会对当前的 dispatch()产生任何影响。
     * 然而，下一个' dispatch() '调用，无论是否嵌套，都将使用订阅的最新快照。也就是说，dispatch过程中增加或减少的订阅不会
     * 在这次体现，而会出现在下次dispatch
    * @param listener A callback to be invoked on every dispatch.
@@ -228,7 +228,7 @@ export default function createStore<
     }
     // 到了这里listener是函数，那么标记已经订阅了
     let isSubscribed = true 
-    
+    // 这个执行后就肯定能确保nextListeners不等于currentListeners
     ensureCanMutateNextListeners()
     nextListeners.push(listener)
 
@@ -334,7 +334,7 @@ export default function createStore<
   }
 
   /**
-   * @description 替换当前的reducer然后计算新的state，一般出现在你的应用有代码分隔，且想要动态地传入reducer，
+   * @description 替换当前的reducer然后计算新的state，一般出现在你的应用有代码分割，且想要动态地传入reducer，
    *              或者有热重置的机制
    * 
    * Replaces the reducer currently used by the store to calculate the state.

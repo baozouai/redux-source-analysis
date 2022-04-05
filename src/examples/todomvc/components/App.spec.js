@@ -1,4 +1,3 @@
-import React from 'react'
 import { createRenderer } from 'react-test-renderer/shallow'
 import App from './App'
 import Header from '../containers/Header'

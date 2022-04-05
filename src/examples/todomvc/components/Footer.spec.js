@@ -1,4 +1,3 @@
-import React from 'react'
 import { createRenderer } from 'react-test-renderer/shallow';
 import Footer from './Footer'
 import FilterLink from '../containers/FilterLink'

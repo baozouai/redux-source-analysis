@@ -10,7 +10,7 @@ import type { ReactReduxContextValue } from '../components/Context'
  *
  * @example
  *
- * import React from 'react'
+ * 
  * import { useReduxContext } from 'react-redux'
  *
  * export const CounterComponent = ({ value }) => {

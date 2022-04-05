@@ -1,4 +1,3 @@
-import React from 'react'
 import PropTypes from 'prop-types'
 import FilterLink from '../containers/FilterLink'
 import { SHOW_ALL, SHOW_COMPLETED, SHOW_ACTIVE } from '../constants/TodoFilters'
